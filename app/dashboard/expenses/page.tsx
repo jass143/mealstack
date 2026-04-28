@@ -357,7 +357,7 @@ export default function ExpensesPage() {
               </SelectContent>
             </Select>
             {/* Period Filter */}
-            <Select value={filterPeriod} onValueChange={(v) => { setFilterPeriod(v); if (v !== "all") { setDateFrom(""); setDateTo(""); } }}>
+            <Select value={filterPeriod} onValueChange={(v) => { setFilterPeriod(v); if (v !== "all") setDateRange(undefined); }}>
               <SelectTrigger className="w-[140px] h-9">
                 <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
                 <SelectValue placeholder="Period" />
