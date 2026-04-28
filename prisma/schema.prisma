@@ -1,0 +1,542 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  MANAGER
+  CASHIER
+  CHEF
+  WAITER
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  ONLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  USAGE
+  WASTE
+  ADJUSTMENT
+  RETURN
+}
+
+enum ShiftStatus {
+  ACTIVE
+  COMPLETED
+}
+
+// ─── Tenant (Restaurant) ────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String   @unique
+  logo      String?
+  address   String?
+  phone     String?
+  email     String?
+  currency  String   @default("USD")
+  taxRate   Float    @default(0)
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                 User[]
+  categories            Category[]
+  products              Product[]
+  orders                Order[]
+  inventoryItems        InventoryItem[]
+  inventoryTransactions InventoryTransaction[]
+  suppliers             Supplier[]
+  customers             Customer[]
+  tables                RestaurantTable[]
+  shifts                Shift[]
+  subscription          Subscription?
+  notifications         Notification[]
+  dailySummaries        DailySummary[]
+  cashTransactions      CashTransaction[]
+  upiConfigs            UpiConfig[]
+  upiPayments           UpiPayment[]
+
+  @@map("tenants")
+}
+
+// ─── Authentication & Staff ─────────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  tenantId       String
+  email          String
+  name           String
+  hashedPassword String
+  role           Role      @default(WAITER)
+  avatar         String?
+  phone          String?
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders           Order[]           @relation("OrderCreatedBy")
+  shifts           Shift[]
+  notifications    Notification[]
+  cashTransactions CashTransaction[] @relation("CashTransactionCreatedBy")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+// ─── Menu / Products ────────────────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("categories")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  tenantId     String
+  categoryId   String?
+  name         String
+  description  String?
+  sku          String?
+  priceCents   Int
+  costCents    Int      @default(0)
+  image        String?
+  isActive     Boolean  @default(true)
+  isVeg          Boolean  @default(false)
+  mealProductId  String?
+  prepTimeMins   Int      @default(15)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category    Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  mealProduct Product?            @relation("MealVariant", fields: [mealProductId], references: [id], onDelete: SetNull)
+  mealOf      Product[]           @relation("MealVariant")
+  orderItems  OrderItem[]
+  ingredients ProductIngredient[]
+  variants    ProductVariant[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId])
+  @@index([categoryId])
+  @@index([mealProductId])
+  @@map("products")
+}
+
+model ProductVariant {
+  id         String  @id @default(cuid())
+  productId  String
+  name       String  // "Regular", "Medium", "Large", "Extra Large"
+  priceCents Int
+  sortOrder  Int     @default(0)
+  isActive   Boolean @default(true)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductIngredient {
+  id              String @id @default(cuid())
+  productId       String
+  inventoryItemId String
+  quantityNeeded  Float
+
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, inventoryItemId])
+  @@map("product_ingredients")
+}
+
+// ─── Tables ─────────────────────────────────────────────────────────────────
+
+model RestaurantTable {
+  id        String   @id @default(cuid())
+  tenantId  String
+  number    Int
+  capacity  Int      @default(4)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
+  @@map("restaurant_tables")
+}
+
+// ─── Orders & POS ───────────────────────────────────────────────────────────
+
+model Order {
+  id            String         @id @default(cuid())
+  tenantId      String
+  orderNumber   Int
+  tableId       String?
+  customerId    String?
+  createdById   String
+  orderType     OrderType      @default(DINE_IN)
+  status        OrderStatus    @default(PENDING)
+  subtotalCents Int
+  discountCents Int            @default(0)
+  taxCents      Int
+  totalCents    Int
+  paymentMethod PaymentMethod?
+  paymentStatus PaymentStatus  @default(PENDING)
+  notes         String?        @db.Text
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  table      RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customer   Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdBy  User             @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  items       OrderItem[]
+  kdsTickets  KdsTicket[]
+  upiPayments UpiPayment[]
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([createdById])
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  qty         Int
+  unitPrice   Int
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// ─── Kitchen Display System ─────────────────────────────────────────────────
+
+model KdsTicket {
+  id          String      @id @default(cuid())
+  orderId     String
+  status      OrderStatus @default(PENDING)
+  priority    Int         @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@map("kds_tickets")
+}
+
+// ─── Inventory ──────────────────────────────────────────────────────────────
+
+model InventoryItem {
+  id           String   @id @default(cuid())
+  tenantId     String
+  name         String
+  sku          String?
+  quantity     Float    @default(0)
+  unit         String   @default("pcs")
+  reorderLevel Float    @default(0)
+  costPerUnit  Int      @default(0)
+  supplierId   String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplier     Supplier?             @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  transactions InventoryTransaction[]
+  ingredients  ProductIngredient[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId])
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id              String                   @id @default(cuid())
+  tenantId        String
+  inventoryItemId String
+  type            InventoryTransactionType
+  quantity        Float
+  notes           String?
+  createdAt       DateTime                 @default(now())
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@map("inventory_transactions")
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items  InventoryItem[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("suppliers")
+}
+
+// ─── Customer CRM ───────────────────────────────────────────────────────────
+
+model Customer {
+  id            String   @id @default(cuid())
+  tenantId      String
+  name          String
+  email         String?
+  phone         String?
+  address       String?
+  notes         String?  @db.Text
+  totalVisits   Int      @default(0)
+  totalSpent    Int      @default(0)
+  loyaltyPoints Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@map("customers")
+}
+
+// ─── Staff Shifts ───────────────────────────────────────────────────────────
+
+model Shift {
+  id        String      @id @default(cuid())
+  tenantId  String
+  userId    String
+  status    ShiftStatus @default(ACTIVE)
+  clockIn   DateTime    @default(now())
+  clockOut  DateTime?
+  breakMins Int         @default(0)
+  notes     String?
+  createdAt DateTime    @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("shifts")
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("notifications")
+}
+
+// ─── Subscription (SaaS Billing) ────────────────────────────────────────────
+
+model Subscription {
+  id               String             @id @default(cuid())
+  tenantId         String             @unique
+  stripeCustomerId String?            @unique
+  stripeSubId      String?            @unique
+  plan             String             @default("free")
+  status           SubscriptionStatus @default(TRIAL)
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ─── Cash Transactions (Expenses, Withdrawals, Top-ups) ─────────────────────
+
+model CashTransaction {
+  id          String              @id @default(cuid())
+  tenantId    String
+  type        CashTransactionType
+  amountCents Int
+  description String
+  category    String?
+  createdById String
+  createdAt   DateTime            @default(now())
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("CashTransactionCreatedBy", fields: [createdById], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@map("cash_transactions")
+}
+
+enum CashTransactionType {
+  EXPENSE
+  WITHDRAWAL
+  TOP_UP
+}
+
+// ─── UPI Payment Integration ────────────────────────────────────────────────
+
+enum UpiPlatform {
+  PAYTM
+  GOOGLE_PAY
+  PHONE_PE
+}
+
+model UpiConfig {
+  id        String      @id @default(cuid())
+  tenantId  String
+  platform  UpiPlatform
+  upiId     String      // e.g. vendor@paytm, vendor@ybl, vendor@ibl
+  label     String?     // display name, e.g. "Shop Paytm QR"
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, platform])
+  @@index([tenantId])
+  @@map("upi_configs")
+}
+
+model UpiPayment {
+  id              String      @id @default(cuid())
+  tenantId        String
+  platform        UpiPlatform
+  transactionId   String      // UPI transaction reference ID
+  senderName      String?     // payer name from callback
+  senderUpiId     String?     // payer UPI ID
+  amountCents     Int         // amount received in cents (paise)
+  status          String      @default("SUCCESS") // SUCCESS, FAILED, PENDING
+  orderId         String?     // linked order (if matched)
+  merchantOrderId String?     // merchant reference from gateway
+  rawPayload      String?     @db.Text // full webhook payload for audit
+  receivedAt      DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, transactionId])
+  @@index([tenantId, receivedAt])
+  @@index([tenantId, platform])
+  @@map("upi_payments")
+}
+
+// ─── Daily Summary (for analytics) ──────────────────────────────────────────
+
+model DailySummary {
+  id            String   @id @default(cuid())
+  tenantId      String
+  date          DateTime @db.Date
+  totalOrders   Int      @default(0)
+  totalRevenue  Int      @default(0)
+  totalTax      Int      @default(0)
+  totalDiscount Int      @default(0)
+  avgOrderValue Int      @default(0)
+  topProductId  String?
+  customerCount Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, date])
+  @@index([tenantId, date])
+  @@map("daily_summaries")
+}

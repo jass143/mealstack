@@ -34,3 +34,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Prisma local artifacts (keep schema.prisma and migrations)
+prisma/*.db
+prisma/*.db-journal

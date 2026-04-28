@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 71% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 24 95% 53%;
+    --radius: 0.625rem;
+    --chart-1: 24 95% 53%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 87% 55%;
+    --chart-4: 43 96% 56%;
+    --chart-5: 339 80% 55%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 47% 7%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 47% 7%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 218 11% 55%;
+    --accent: 222 47% 14%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 63% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 30% 14%;
+    --input: 223 30% 14%;
+    --ring: 24 95% 53%;
+    --chart-1: 24 95% 53%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 197 87% 55%;
+    --chart-4: 43 96% 56%;
+    --chart-5: 339 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Smooth scrollbar for dark theme */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+/* Glass morphism utility */
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] shadow-xl;
+  }
+}
+
+/* React Day Picker overrides */
+.rdp {
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: #f97316;
+  --rdp-background-color: rgba(249, 115, 22, 0.15);
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+.rdp-months {
+  gap: 1.5rem;
+}
+.rdp-caption_label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.rdp-head_cell {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.rdp-nav_button {
+  color: hsl(var(--muted-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+}
+.rdp-nav_button:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+.rdp-day {
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.rdp-day:hover:not(.rdp-day_selected):not(.rdp-day_range_middle) {
+  background: hsl(var(--accent)) !important;
+}
+.rdp-day_outside {
+  opacity: 0.25;
+}
+
+/* Selected range start & end */
+.rdp-day_selected,
+.rdp-day_range_start .rdp-day_selected,
+.rdp-day_range_end .rdp-day_selected,
+.rdp-day_range_start,
+.rdp-day_range_end {
+  background-color: #f97316 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* Range middle days */
+.rdp-day_range_middle,
+.rdp-day_range_middle.rdp-day_selected {
+  background-color: rgba(249, 115, 22, 0.25) !important;
+  color: #fb923c !important;
+  border-radius: 0 !important;
+  font-weight: 500 !important;
+}
+
+/* Round corners on range edges */
+.rdp-day_range_start:not(.rdp-day_range_end) {
+  border-radius: 6px 0 0 6px !important;
+}
+.rdp-day_range_end:not(.rdp-day_range_start) {
+  border-radius: 0 6px 6px 0 !important;
+}
+.rdp-day_range_start.rdp-day_range_end {
+  border-radius: 6px !important;
+}
+
+/* Today indicator */
+.rdp-day_today:not(.rdp-day_selected):not(.rdp-day_range_middle) {
+  border: 2px solid #f97316 !important;
+  font-weight: 700;
+}
+
+/* Gradient text utility */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@layer utilities {
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-glow { animation: glow 3s ease-in-out infinite; }
+  .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
+  .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+  .animate-slide-in-left { animation: slideInLeft 0.2s ease-out forwards; }
+}
