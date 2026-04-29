@@ -75,7 +75,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     return success(mealProduct, 201);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }
 
 // DELETE — remove meal variant from a product
@@ -100,5 +100,5 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     });
 
     return success({ message: "Meal variant removed" });
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

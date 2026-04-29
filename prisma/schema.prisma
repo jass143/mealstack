@@ -10,11 +10,9 @@ datasource db {
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum Role {
-  ADMIN
+  SUPERADMIN
+  VENDOR
   MANAGER
-  CASHIER
-  CHEF
-  WAITER
 }
 
 enum SubscriptionStatus {
@@ -107,11 +105,11 @@ model Tenant {
 
 model User {
   id             String    @id @default(cuid())
-  tenantId       String
+  tenantId       String?
   email          String
   name           String
   hashedPassword String
-  role           Role      @default(WAITER)
+  role           Role      @default(MANAGER)
   avatar         String?
   phone          String?
   isActive       Boolean   @default(true)
@@ -119,7 +117,7 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant           Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   orders           Order[]           @relation("OrderCreatedBy")
   shifts           Shift[]
   notifications    Notification[]
@@ -127,6 +125,7 @@ model User {
 
   @@unique([tenantId, email])
   @@index([tenantId])
+  @@index([email])
   @@map("users")
 }
 

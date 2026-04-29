@@ -50,7 +50,7 @@ export async function PATCH(
     if (!existing) return error("Staff member not found", 404);
 
     // Non-admins cannot change roles
-    if (validation.data.role && ctx.role !== Role.ADMIN) {
+    if (validation.data.role && ctx.role !== Role.VENDOR) {
       return error("Only admins can change roles", 403);
     }
 
@@ -58,7 +58,7 @@ export async function PATCH(
     if (
       validation.data.role &&
       params.id === ctx.userId &&
-      ctx.role !== Role.ADMIN
+      ctx.role !== Role.VENDOR
     ) {
       return error("Cannot change your own role", 403);
     }
@@ -70,10 +70,10 @@ export async function PATCH(
     });
 
     return success(updated);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR]);
 }
 
-// DELETE /api/staff/[id] - Deactivate staff member (ADMIN only)
+// DELETE /api/staff/[id] - Deactivate staff member (VENDOR only)
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
@@ -96,5 +96,5 @@ export async function DELETE(
     });
 
     return success(updated);
-  }, [Role.ADMIN]);
+  }, [Role.VENDOR]);
 }

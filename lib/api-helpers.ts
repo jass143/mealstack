@@ -59,7 +59,7 @@ export async function getApiContext(): Promise<ApiContext | null> {
 //         where: { tenantId: ctx.tenantId }
 //       });
 //       return success(data);
-//     }, [Role.ADMIN, Role.MANAGER]);
+//     }, [Role.VENDOR, Role.MANAGER]);
 //   }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -81,6 +81,28 @@ export async function withAuth(
     return await handler(ctx);
   } catch (err) {
     console.error("[API Error]", err);
+    return error("Internal server error", 500);
+  }
+}
+
+// ─── SuperAdmin Wrapper ─────────────────────────────────────────────────────
+// Used by /api/admin/* routes. No tenant context — operates platform-wide.
+// Role MUST be SUPERADMIN.
+// ────────────────────────────────────────────────────────────────────────────
+
+export async function withSuperAdmin(
+  handler: (userId: string) => Promise<NextResponse>
+): Promise<NextResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return error("Unauthorized", 401);
+
+    const { id, role } = session.user as { id: string; role: string };
+    if (role !== Role.SUPERADMIN) return error("Forbidden", 403);
+
+    return await handler(id);
+  } catch (err) {
+    console.error("[SuperAdmin API Error]", err);
     return error("Internal server error", 500);
   }
 }

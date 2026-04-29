@@ -70,5 +70,5 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     return success(updated);
-  }, [Role.ADMIN, Role.MANAGER, Role.CASHIER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

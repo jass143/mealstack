@@ -7,7 +7,7 @@ export type SessionUser = {
   email: string;
   name: string;
   role: string;
-  tenantId: string;
+  tenantId: string | null;
 };
 
 export async function getSession() {
@@ -24,14 +24,14 @@ export function requireRole(userRole: string, allowedRoles: Role[]): boolean {
   return allowedRoles.includes(userRole as Role);
 }
 
-export function isAdmin(role: string) {
-  return role === Role.ADMIN;
+export function isSuperAdmin(role: string) {
+  return role === Role.SUPERADMIN;
 }
 
-export function isManager(role: string) {
-  return role === Role.ADMIN || role === Role.MANAGER;
+export function isVendor(role: string) {
+  return role === Role.VENDOR;
 }
 
-export function isStaff(role: string) {
-  return [Role.ADMIN, Role.MANAGER, Role.CASHIER, Role.CHEF, Role.WAITER].includes(role as Role);
+export function isManagerOrAbove(role: string) {
+  return role === Role.VENDOR || role === Role.MANAGER;
 }

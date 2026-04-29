@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           email,
           name: adminName,
           hashedPassword,
-          role: "ADMIN",
+          role: "VENDOR",
         },
       });
 

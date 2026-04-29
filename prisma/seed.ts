@@ -24,18 +24,38 @@ async function main() {
 
   console.log("Created tenant:", tenant.name);
 
-  // Create admin user
+  // Create SuperAdmin (platform owner — no tenant)
+  const superAdminPassword = await bcrypt.hash("JasMealStack@0051", 10);
+  const existingSuperAdmin = await prisma.user.findFirst({
+    where: { email: "superadminmealstack@gmail.com", role: Role.SUPERADMIN },
+  });
+  const superAdmin = existingSuperAdmin
+    ? await prisma.user.update({
+        where: { id: existingSuperAdmin.id },
+        data: { hashedPassword: superAdminPassword, name: "Platform Super Admin" },
+      })
+    : await prisma.user.create({
+        data: {
+          tenantId: null,
+          email: "superadminmealstack@gmail.com",
+          name: "Platform Super Admin",
+          hashedPassword: superAdminPassword,
+          role: Role.SUPERADMIN,
+        },
+      });
+
+  // Demo vendor + manager
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  const admin = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: "admin@demo.com" } },
+  const vendor = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: "vendor@demo.com" } },
     update: {},
     create: {
       tenantId: tenant.id,
-      email: "admin@demo.com",
-      name: "Admin User",
+      email: "vendor@demo.com",
+      name: "Demo Vendor",
       hashedPassword,
-      role: Role.ADMIN,
+      role: Role.VENDOR,
     },
   });
 
@@ -51,43 +71,7 @@ async function main() {
     },
   });
 
-  const cashier = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: "cashier@demo.com" } },
-    update: {},
-    create: {
-      tenantId: tenant.id,
-      email: "cashier@demo.com",
-      name: "Mike Cashier",
-      hashedPassword,
-      role: Role.CASHIER,
-    },
-  });
-
-  const chef = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: "chef@demo.com" } },
-    update: {},
-    create: {
-      tenantId: tenant.id,
-      email: "chef@demo.com",
-      name: "Chef Gordon",
-      hashedPassword,
-      role: Role.CHEF,
-    },
-  });
-
-  const waiter = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: "waiter@demo.com" } },
-    update: {},
-    create: {
-      tenantId: tenant.id,
-      email: "waiter@demo.com",
-      name: "Lisa Waiter",
-      hashedPassword,
-      role: Role.WAITER,
-    },
-  });
-
-  console.log("Created users:", [admin, manager, cashier, chef, waiter].map((u) => u.email));
+  console.log("Created users:", [superAdmin, vendor, manager].map((u) => u.email));
 
   // Create categories
   const categories = await Promise.all([
@@ -290,10 +274,21 @@ async function main() {
   });
 
   console.log("Created trial subscription");
-  console.log("\nSeed completed! Login with:");
-  console.log("  Tenant Domain: demo");
-  console.log("  Email: admin@demo.com");
-  console.log("  Password: password123");
+  console.log("\nSeed completed! Login credentials:");
+  console.log("");
+  console.log("  SuperAdmin → /admin/login");
+  console.log("    Email:    superadminmealstack@gmail.com");
+  console.log("    Password: JasMealStack@0051");
+  console.log("");
+  console.log("  Vendor → /login");
+  console.log("    Tenant:   demo");
+  console.log("    Email:    vendor@demo.com");
+  console.log("    Password: password123");
+  console.log("");
+  console.log("  Manager → /login");
+  console.log("    Tenant:   demo");
+  console.log("    Email:    manager@demo.com");
+  console.log("    Password: password123");
 }
 
 main()

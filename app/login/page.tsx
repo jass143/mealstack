@@ -9,9 +9,9 @@ import { Loader2, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [domain, setDomain] = useState("demo");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const domain = "demo";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,18 +21,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const tenantRes = await fetch(`/api/auth/resolve-tenant?domain=${encodeURIComponent(domain)}`);
-      let tenantId = domain;
-
-      if (tenantRes.ok) {
-        const tenantData = await tenantRes.json();
-        tenantId = tenantData.tenantId ?? domain;
-      }
-
+      // Pass the domain as-is — auth-options resolves it server-side.
       const result = await signIn("credentials", {
         email,
         password,
-        tenantId,
+        tenantId: domain,
         redirect: false,
       });
 
@@ -95,13 +88,27 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label htmlFor="domain" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Restaurant
+              </label>
+              <input
+                id="domain"
+                type="text"
+                placeholder="demo"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                required
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-muted-foreground/50"
+              />
+            </div>
+            <div>
               <label htmlFor="email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Email
               </label>
               <input
                 id="email"
                 type="email"
-                placeholder="admin@restaurant.com"
+                placeholder="vendor@restaurant.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

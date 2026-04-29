@@ -100,5 +100,5 @@ export async function GET(req: NextRequest) {
       ordersByType: ordersByTypeArray,
       paymentMethods: paymentMethodsArray,
     });
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

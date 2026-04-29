@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     return success(supplier);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
@@ -73,5 +73,5 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
     await prisma.supplier.delete({ where: { id: params.id } });
     return success({ message: "Supplier deleted" });
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

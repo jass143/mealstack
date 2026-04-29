@@ -42,7 +42,7 @@ import { cn, formatDateTime } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Role = "ADMIN" | "MANAGER" | "CASHIER" | "CHEF" | "WAITER";
+type Role = "VENDOR" | "MANAGER";
 
 interface StaffMember {
   id: string;
@@ -80,11 +80,8 @@ interface Shift {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const ROLE_COLORS: Record<Role, string> = {
-  ADMIN: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  VENDOR: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
   MANAGER: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  CASHIER: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  CHEF: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  WAITER: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
 };
 
 function getInitials(name: string): string {
@@ -132,7 +129,7 @@ export default function StaffPage() {
     name: "",
     email: "",
     password: "",
-    role: "WAITER" as Role,
+    role: "MANAGER" as Role,
     phone: "",
   });
 
@@ -140,7 +137,7 @@ export default function StaffPage() {
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
-    role: "WAITER" as Role,
+    role: "MANAGER" as Role,
     phone: "",
   });
 
@@ -250,7 +247,7 @@ export default function StaffPage() {
       });
       if (res.ok) {
         setAddOpen(false);
-        setAddForm({ name: "", email: "", password: "", role: "WAITER", phone: "" });
+        setAddForm({ name: "", email: "", password: "", role: "MANAGER", phone: "" });
         await fetchStaff();
       } else {
         const data = await res.json();
@@ -717,11 +714,7 @@ export default function StaffPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
                   <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="CASHIER">Cashier</SelectItem>
-                  <SelectItem value="CHEF">Chef</SelectItem>
-                  <SelectItem value="WAITER">Waiter</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -797,11 +790,7 @@ export default function StaffPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
                   <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="CASHIER">Cashier</SelectItem>
-                  <SelectItem value="CHEF">Chef</SelectItem>
-                  <SelectItem value="WAITER">Waiter</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     return success(updated);
-  }, [Role.ADMIN, Role.MANAGER, Role.CASHIER, Role.CHEF, Role.WAITER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
@@ -86,5 +86,5 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     });
 
     return success(updated);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

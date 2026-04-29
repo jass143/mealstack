@@ -33,8 +33,8 @@ export default function DeliveryBoysPage() {
       if (res.ok) {
         const data = await res.json();
         const all = Array.isArray(data) ? data : [];
-        // Filter for WAITER role (delivery staff) — in a real system you'd have a DELIVERY role
-        setStaff(all.filter((s: Staff) => s.role === "WAITER" || s.role === "CASHIER"));
+        // Show all Manager staff (no dedicated DELIVERY role yet)
+        setStaff(all.filter((s: Staff) => s.role === "MANAGER"));
       }
     } catch {}
     setLoading(false);

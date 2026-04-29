@@ -78,5 +78,5 @@ export async function GET(_req: NextRequest) {
       lowStockItems,
       revenueByDay,
     });
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

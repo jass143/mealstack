@@ -21,26 +21,24 @@ import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/stores/use-app-store"
 
+// `vendorOnly` items are hidden from MANAGER role (account-level controls).
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Operations", href: "/dashboard/operations", icon: Grid3X3 },
-  { label: "Kitchen", href: "/dashboard/kds", icon: ChefHat },
-  { label: "Inventory", href: "/dashboard/inventory", icon: Package },
-  { label: "Staff", href: "/dashboard/staff", icon: Users },
-  { label: "Customers", href: "/dashboard/customers", icon: UserCircle },
-  { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
-  { label: "Subscription", href: "/dashboard/subscription", icon: CreditCard },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, vendorOnly: false },
+  { label: "Operations", href: "/dashboard/operations", icon: Grid3X3, vendorOnly: false },
+  { label: "Kitchen", href: "/dashboard/kds", icon: ChefHat, vendorOnly: false },
+  { label: "Inventory", href: "/dashboard/inventory", icon: Package, vendorOnly: false },
+  { label: "Staff", href: "/dashboard/staff", icon: Users, vendorOnly: true },
+  { label: "Customers", href: "/dashboard/customers", icon: UserCircle, vendorOnly: false },
+  { label: "Reports", href: "/dashboard/reports", icon: BarChart3, vendorOnly: false },
+  { label: "Subscription", href: "/dashboard/subscription", icon: CreditCard, vendorOnly: true },
+  { label: "Settings", href: "/dashboard/settings", icon: Settings, vendorOnly: true },
 ] as const
 
 function getRoleBadge(role: string) {
   const styles: Record<string, string> = {
-    admin: "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20",
-    owner: "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20",
+    superadmin: "bg-red-500/15 text-red-400 ring-1 ring-red-500/20",
+    vendor: "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20",
     manager: "bg-sky-500/15 text-sky-400 ring-1 ring-sky-500/20",
-    chef: "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20",
-    cashier: "bg-violet-500/15 text-violet-400 ring-1 ring-violet-500/20",
-    waiter: "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20",
   }
   return styles[role.toLowerCase()] || "bg-muted text-muted-foreground"
 }
@@ -53,6 +51,8 @@ export function Sidebar() {
   const userRole = (session?.user as { role?: string } | undefined)?.role ?? "staff"
   const userName = session?.user?.name ?? "User"
   const userInitial = userName.charAt(0).toUpperCase()
+  const isVendor = userRole.toUpperCase() === "VENDOR"
+  const visibleNavItems = navItems.filter((item) => !item.vendorOnly || isVendor)
 
   return (
     <>
@@ -97,7 +97,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-0.5">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
                 ? pathname === "/dashboard"

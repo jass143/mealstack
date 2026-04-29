@@ -208,5 +208,5 @@ export async function POST(req: NextRequest) {
     });
 
     return success(order, 201);
-  }, [Role.ADMIN, Role.MANAGER, Role.CASHIER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

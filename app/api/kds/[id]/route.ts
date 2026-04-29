@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { withAuth, success, error } from "@/lib/api-helpers";
 import { emitToTenant } from "@/lib/socket-client";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Role } from "@prisma/client";
 
 const ALLOWED_TRANSITIONS: Record<string, OrderStatus[]> = {
   PENDING: ["PREPARING", "CONFIRMED", "CANCELLED"],
@@ -122,5 +122,5 @@ export async function PATCH(
       console.error("KDS PATCH error:", err);
       return error("Failed to update ticket", 500);
     }
-  }, ["ADMIN", "MANAGER", "CHEF"]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

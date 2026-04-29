@@ -67,5 +67,5 @@ export async function POST(req: NextRequest) {
     });
 
     return success({ url: session.url });
-  }, [Role.ADMIN]);
+  }, [Role.VENDOR]);
 }

@@ -103,18 +103,20 @@ export const updateCustomerSchema = createCustomerSchema.partial();
 
 // ─── Staff ───────────────────────────────────────────────────────────────────
 
+// Vendors can only create Manager accounts. SuperAdmin and Vendor are not
+// staff-creatable: SuperAdmin is seeded; Vendor is created via /register.
 export const createStaffSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(["ADMIN", "MANAGER", "CASHIER", "CHEF", "WAITER"]),
+  role: z.enum(["MANAGER"]),
   phone: z.string().optional(),
 });
 
 export const updateStaffSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   email: z.string().email().optional(),
-  role: z.enum(["ADMIN", "MANAGER", "CASHIER", "CHEF", "WAITER"]).optional(),
+  role: z.enum(["MANAGER"]).optional(),
   phone: z.string().optional(),
   isActive: z.boolean().optional(),
 });

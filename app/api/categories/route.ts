@@ -42,5 +42,5 @@ export async function POST(req: NextRequest) {
     });
 
     return success(category, 201);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

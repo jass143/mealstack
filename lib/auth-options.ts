@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
+import { Role } from "@prisma/client";
 import prisma from "./prisma";
 
 declare module "next-auth" {
@@ -10,7 +11,7 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: string;
-      tenantId: string;
+      tenantId: string | null;
     };
   }
 
@@ -19,7 +20,7 @@ declare module "next-auth" {
     email: string;
     name: string;
     role: string;
-    tenantId: string;
+    tenantId: string | null;
   }
 }
 
@@ -27,7 +28,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
-    tenantId: string;
+    tenantId: string | null;
   }
 }
 
@@ -41,11 +42,45 @@ export const authOptions: NextAuthOptions = {
         tenantId: { label: "Tenant ID", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password || !credentials?.tenantId) {
+        if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing credentials");
         }
 
-        // Resolve: tenantId field can be either a domain or an actual ID
+        // SuperAdmin path — no tenant required
+        if (!credentials.tenantId) {
+          const superAdmin = await prisma.user.findFirst({
+            where: {
+              email: credentials.email,
+              role: Role.SUPERADMIN,
+              isActive: true,
+            },
+          });
+
+          if (!superAdmin) {
+            throw new Error("Invalid credentials");
+          }
+
+          const valid = await bcrypt.compare(credentials.password, superAdmin.hashedPassword);
+          if (!valid) {
+            throw new Error("Invalid credentials");
+          }
+
+          await prisma.user.update({
+            where: { id: superAdmin.id },
+            data: { lastLoginAt: new Date() },
+          });
+
+          return {
+            id: superAdmin.id,
+            email: superAdmin.email,
+            name: superAdmin.name,
+            role: superAdmin.role,
+            tenantId: null,
+          };
+        }
+
+        // Tenant-scoped path (Vendor / Manager)
+        // tenantId field can be either a domain or an actual ID
         const tenant = await prisma.tenant.findFirst({
           where: {
             OR: [
@@ -64,6 +99,7 @@ export const authOptions: NextAuthOptions = {
             email: credentials.email,
             tenantId: tenant.id,
             isActive: true,
+            role: { in: [Role.VENDOR, Role.MANAGER] },
           },
         });
 

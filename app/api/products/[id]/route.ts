@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     return success(updated);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
@@ -78,5 +78,5 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     });
 
     return success({ message: "Product deactivated" });
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER]);
 }

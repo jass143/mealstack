@@ -29,7 +29,7 @@ export async function GET() {
   });
 }
 
-// POST /api/staff - Create new staff member (ADMIN, MANAGER only)
+// POST /api/staff - Create new staff member (VENDOR only — only Managers can be created)
 export async function POST(req: NextRequest) {
   return withAuth(async (ctx) => {
     const body = await req.json();
@@ -72,5 +72,5 @@ export async function POST(req: NextRequest) {
     });
 
     return success(user, 201);
-  }, [Role.ADMIN, Role.MANAGER]);
+  }, [Role.VENDOR]);
 }
