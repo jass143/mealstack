@@ -1,7 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import { Role } from "@prisma/client";
 import prisma from "./prisma";
 
 declare module "next-auth" {
@@ -39,71 +38,21 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        tenantId: { label: "Tenant ID", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing credentials");
         }
 
-        // SuperAdmin path — no tenant required
-        if (!credentials.tenantId) {
-          const superAdmin = await prisma.user.findFirst({
-            where: {
-              email: credentials.email,
-              role: Role.SUPERADMIN,
-              isActive: true,
-            },
-          });
-
-          if (!superAdmin) {
-            throw new Error("Invalid credentials");
-          }
-
-          const valid = await bcrypt.compare(credentials.password, superAdmin.hashedPassword);
-          if (!valid) {
-            throw new Error("Invalid credentials");
-          }
-
-          await prisma.user.update({
-            where: { id: superAdmin.id },
-            data: { lastLoginAt: new Date() },
-          });
-
-          return {
-            id: superAdmin.id,
-            email: superAdmin.email,
-            name: superAdmin.name,
-            role: superAdmin.role,
-            tenantId: null,
-          };
-        }
-
-        // Tenant-scoped path (Vendor / Manager)
-        // tenantId field can be either a domain or an actual ID
-        const tenant = await prisma.tenant.findFirst({
-          where: {
-            OR: [
-              { domain: credentials.tenantId },
-              { id: credentials.tenantId },
-            ],
-          },
+        // Email is globally unique, so a single lookup tells us:
+        //   - Whether the user exists
+        //   - Their role (SuperAdmin vs Vendor/Manager)
+        //   - Their tenant (null for SuperAdmin)
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
         });
 
-        if (!tenant) {
-          throw new Error("Invalid credentials");
-        }
-
-        const user = await prisma.user.findFirst({
-          where: {
-            email: credentials.email,
-            tenantId: tenant.id,
-            isActive: true,
-            role: { in: [Role.VENDOR, Role.MANAGER] },
-          },
-        });
-
-        if (!user) {
+        if (!user || !user.isActive) {
           throw new Error("Invalid credentials");
         }
 

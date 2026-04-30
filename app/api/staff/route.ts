@@ -38,12 +38,10 @@ export async function POST(req: NextRequest) {
 
     const { name, email, password, role, phone } = validation.data;
 
-    // Check if email already exists for this tenant
-    const existing = await prisma.user.findFirst({
-      where: { tenantId: ctx.tenantId, email },
-    });
+    // Email is globally unique across the platform
+    const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      return error("A staff member with this email already exists", 409);
+      return error("This email is already in use", 409);
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);

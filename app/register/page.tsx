@@ -9,16 +9,10 @@ import { Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 export default function RegisterPage() {
   const router = useRouter();
   const [restaurantName, setRestaurantName] = useState("");
-  const [domain, setDomain] = useState("");
-  const [adminName, setAdminName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const handleDomainChange = (value: string) => {
-    setDomain(value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
-  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,7 +29,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantName, domain, adminName, email, password }),
+        body: JSON.stringify({ restaurantName, email, password }),
       });
 
       const data = await res.json();
@@ -124,37 +118,6 @@ export default function RegisterPage() {
                 placeholder="My Restaurant"
                 value={restaurantName}
                 onChange={(e) => setRestaurantName(e.target.value)}
-                required
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-muted-foreground/50"
-              />
-            </div>
-            <div>
-              <label htmlFor="domain" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Subdomain
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="domain"
-                  type="text"
-                  placeholder="my-restaurant"
-                  value={domain}
-                  onChange={(e) => handleDomainChange(e.target.value)}
-                  required
-                  className="flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-muted-foreground/50"
-                />
-                <span className="text-xs text-muted-foreground whitespace-nowrap">.mealstack.app</span>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="adminName" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Your Name
-              </label>
-              <input
-                id="adminName"
-                type="text"
-                placeholder="John Doe"
-                value={adminName}
-                onChange={(e) => setAdminName(e.target.value)}
                 required
                 className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder:text-muted-foreground/50"
               />

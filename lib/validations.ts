@@ -5,13 +5,10 @@ import { z } from "zod";
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  tenantId: z.string().min(1),
 });
 
 export const registerTenantSchema = z.object({
-  tenantName: z.string().min(2).max(100),
-  domain: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/),
-  name: z.string().min(2).max(100),
+  restaurantName: z.string().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(8),
 });
