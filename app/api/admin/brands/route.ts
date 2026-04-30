@@ -17,7 +17,6 @@ export async function GET() {
       brands.map((b) => ({
         id: b.id,
         name: b.name,
-        commissionPercent: b.commissionPercent,
         createdAt: b.createdAt,
         owner: b.owner,
         outletCount: b._count.outlets,
@@ -27,7 +26,7 @@ export async function GET() {
 }
 
 // POST /api/admin/brands — create a brand and promote a User to BRAND_OWNER.
-// Body: { name, ownerEmail, commissionPercent, outletTenantId? }
+// Body: { name, ownerEmail, outletTenantId? }
 //
 // If outletTenantId is provided, the owner's existing tenant is also linked
 // to the new brand (so the brand owner has at least one outlet — their own).
@@ -36,10 +35,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return error("Invalid JSON body");
 
-    const { name, ownerEmail, commissionPercent, outletTenantId } = body as {
+    const { name, ownerEmail, outletTenantId } = body as {
       name?: string;
       ownerEmail?: string;
-      commissionPercent?: number;
       outletTenantId?: string | null;
     };
 
@@ -48,10 +46,6 @@ export async function POST(req: NextRequest) {
     }
     if (!ownerEmail || typeof ownerEmail !== "string") {
       return error("ownerEmail is required");
-    }
-    const pct = Number(commissionPercent ?? 0);
-    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-      return error("commissionPercent must be between 0 and 100");
     }
 
     const owner = await prisma.user.findUnique({ where: { email: ownerEmail } });
@@ -69,7 +63,6 @@ export async function POST(req: NextRequest) {
         data: {
           name: name.trim(),
           ownerUserId: owner.id,
-          commissionPercent: pct,
         },
       });
 

@@ -7,7 +7,6 @@ import { Layers, Plus } from "lucide-react";
 type Brand = {
   id: string;
   name: string;
-  commissionPercent: number;
   createdAt: string;
   outletCount: number;
   owner: { id: string; name: string; email: string };
@@ -23,7 +22,6 @@ export default function AdminBrandsPage() {
   // Create form state
   const [name, setName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
-  const [commissionPercent, setCommissionPercent] = useState(2);
 
   async function load() {
     try {
@@ -43,7 +41,7 @@ export default function AdminBrandsPage() {
       const res = await fetch("/api/admin/brands", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, ownerEmail, commissionPercent }),
+        body: JSON.stringify({ name, ownerEmail }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -52,7 +50,6 @@ export default function AdminBrandsPage() {
       }
       setName("");
       setOwnerEmail("");
-      setCommissionPercent(2);
       setShowCreate(false);
       await load();
     } finally {
@@ -69,7 +66,7 @@ export default function AdminBrandsPage() {
           <Layers className="h-6 w-6 text-orange-400" />
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Brands</h1>
-            <p className="text-sm text-slate-400 mt-0.5">Franchise brands with multiple outlets and commission tracking.</p>
+            <p className="text-sm text-slate-400 mt-0.5">Group multiple outlets under one owner. The brand owner gets read-only oversight across every outlet.</p>
           </div>
         </div>
         <button
@@ -108,20 +105,6 @@ export default function AdminBrandsPage() {
             />
             <p className="mt-1 text-xs text-slate-500">The user will be promoted to BRAND_OWNER. Their existing tenant becomes the brand&apos;s first outlet.</p>
           </div>
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Commission %</label>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              step={0.1}
-              value={commissionPercent}
-              onChange={(e) => setCommissionPercent(parseFloat(e.target.value) || 0)}
-              required
-              className="w-32 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-orange-500"
-            />
-            <p className="mt-1 text-xs text-slate-500">Charged on each PAID order in any outlet under this brand.</p>
-          </div>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-700 px-4 py-2 text-sm">Cancel</button>
             <button type="submit" disabled={creating} className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
@@ -138,7 +121,6 @@ export default function AdminBrandsPage() {
               <th className="text-left px-5 py-3 font-semibold">Brand</th>
               <th className="text-left px-5 py-3 font-semibold">Owner</th>
               <th className="text-right px-5 py-3 font-semibold">Outlets</th>
-              <th className="text-right px-5 py-3 font-semibold">Commission</th>
               <th className="text-left px-5 py-3 font-semibold">Created</th>
               <th className="px-5 py-3"></th>
             </tr>
@@ -146,7 +128,7 @@ export default function AdminBrandsPage() {
           <tbody>
             {brands.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-slate-500">No brands yet. Create one to enable franchise commission tracking.</td>
+                <td colSpan={5} className="px-5 py-8 text-center text-slate-500">No brands yet. Create one to give a vendor read-only oversight across multiple outlets.</td>
               </tr>
             ) : (
               brands.map((b) => (
@@ -157,7 +139,6 @@ export default function AdminBrandsPage() {
                     <div className="text-xs text-slate-500 font-mono">{b.owner.email}</div>
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums">{b.outletCount}</td>
-                  <td className="px-5 py-3 text-right tabular-nums text-amber-400">{b.commissionPercent}%</td>
                   <td className="px-5 py-3 text-slate-400 text-xs">{new Date(b.createdAt).toLocaleDateString()}</td>
                   <td className="px-5 py-3 text-right">
                     <Link href={`/admin/brands/${b.id}`} className="text-orange-400 text-xs font-semibold">Manage →</Link>

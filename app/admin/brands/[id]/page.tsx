@@ -8,7 +8,6 @@ import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 type Brand = {
   id: string;
   name: string;
-  commissionPercent: number;
   createdAt: string;
   owner: { id: string; name: string; email: string };
   outlets: { id: string; name: string; domain: string; createdAt: string; _count: { orders: number } }[];
@@ -25,7 +24,6 @@ export default function AdminBrandDetailPage() {
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState("");
   const [editName, setEditName] = useState("");
-  const [editPct, setEditPct] = useState(0);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(async () => {
@@ -35,7 +33,6 @@ export default function AdminBrandDetailPage() {
         const data = await res.json();
         setBrand(data);
         setEditName(data.name);
-        setEditPct(data.commissionPercent);
       }
     } finally {
       setLoading(false);
@@ -66,7 +63,7 @@ export default function AdminBrandDetailPage() {
   }
 
   async function handleUnlink(tenantId: string) {
-    if (!confirm("Unlink this outlet from the brand? It will become an independent restaurant. Past commission entries are kept.")) return;
+    if (!confirm("Unlink this outlet from the brand? It will become an independent restaurant.")) return;
     const res = await fetch(`/api/admin/brands/${brandId}/outlets?tenantId=${tenantId}`, { method: "DELETE" });
     if (res.ok) await load();
   }
@@ -78,7 +75,7 @@ export default function AdminBrandDetailPage() {
       const res = await fetch(`/api/admin/brands/${brandId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, commissionPercent: editPct }),
+        body: JSON.stringify({ name: editName }),
       });
       if (res.ok) await load();
     } finally {
@@ -87,7 +84,7 @@ export default function AdminBrandDetailPage() {
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this brand? Outlets will become independent and the owner is demoted to VENDOR. Past commission entries are removed.")) return;
+    if (!confirm("Delete this brand? Outlets will become independent and the owner is demoted to VENDOR.")) return;
     const res = await fetch(`/api/admin/brands/${brandId}`, { method: "DELETE" });
     if (res.ok) router.push("/admin/brands");
   }
@@ -106,24 +103,12 @@ export default function AdminBrandDetailPage() {
         <p className="text-sm text-slate-400 mt-1">Owner: {brand.owner.name} &lt;{brand.owner.email}&gt;</p>
       </div>
 
-      <form onSubmit={handleSaveEdit} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <form onSubmit={handleSaveEdit} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Brand name</label>
           <input
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-orange-500"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Commission %</label>
-          <input
-            type="number"
-            step={0.1}
-            min={0}
-            max={100}
-            value={editPct}
-            onChange={(e) => setEditPct(parseFloat(e.target.value) || 0)}
             className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm outline-none focus:border-orange-500"
           />
         </div>

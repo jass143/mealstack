@@ -116,7 +116,6 @@ export async function withSuperAdmin(
 export type BrandContext = {
   userId: string;
   brandId: string;
-  commissionPercent: number;
 };
 
 export async function withBrandOwner(
@@ -134,11 +133,7 @@ export async function withBrandOwner(
     const brand = await prisma.brand.findUnique({ where: { ownerUserId: id } });
     if (!brand) return error("No brand attached to this account", 404);
 
-    return await handler({
-      userId: id,
-      brandId: brand.id,
-      commissionPercent: brand.commissionPercent,
-    });
+    return await handler({ userId: id, brandId: brand.id });
   } catch (err) {
     console.error("[BrandOwner API Error]", err);
     return error("Internal server error", 500);

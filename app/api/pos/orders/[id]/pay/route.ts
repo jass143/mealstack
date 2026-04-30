@@ -32,13 +32,6 @@ export async function POST(req: NextRequest, { params }: Params) {
     const discount = discountCents || 0;
     const newTotal = Math.max(0, order.totalCents - discount);
 
-    // Resolve the tenant's brand once, so we can write a commission ledger
-    // entry inside the same transaction that marks the order paid.
-    const tenantWithBrand = await prisma.tenant.findUnique({
-      where: { id: ctx.tenantId },
-      select: { brandId: true, brand: { select: { commissionPercent: true } } },
-    });
-
     const updated = await prisma.$transaction(async (tx) => {
       const updatedOrder = await tx.order.update({
         where: { id: params.id },
@@ -72,26 +65,6 @@ export async function POST(req: NextRequest, { params }: Params) {
         where: { orderId: params.id },
         data: { status: "COMPLETED", completedAt: new Date() },
       });
-
-      // If this tenant belongs to a brand with a non-zero commission, log
-      // the commission entry. orderId is unique on the ledger, so re-runs
-      // (e.g., refund/repay) won't double-charge.
-      if (tenantWithBrand?.brandId && tenantWithBrand.brand?.commissionPercent) {
-        const pct = tenantWithBrand.brand.commissionPercent;
-        const amountCents = Math.round((newTotal * pct) / 100);
-        if (amountCents > 0) {
-          await tx.commissionLedger.upsert({
-            where: { orderId: params.id },
-            update: { amountCents },
-            create: {
-              brandId: tenantWithBrand.brandId,
-              tenantId: ctx.tenantId,
-              orderId: params.id,
-              amountCents,
-            },
-          });
-        }
-      }
 
       return updatedOrder;
     });

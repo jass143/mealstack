@@ -27,34 +27,27 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
 }
 
-// PATCH /api/admin/brands/[id] — update name or commission rate
+// PATCH /api/admin/brands/[id] — rename
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   return withSuperAdmin(async () => {
     const body = await req.json().catch(() => null);
     if (!body) return error("Invalid JSON body");
 
-    const data: { name?: string; commissionPercent?: number } = {};
-    if (typeof body.name === "string" && body.name.trim().length >= 2) {
-      data.name = body.name.trim();
+    if (typeof body.name !== "string" || body.name.trim().length < 2) {
+      return error("Brand name must be at least 2 characters");
     }
-    if (body.commissionPercent !== undefined) {
-      const pct = Number(body.commissionPercent);
-      if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-        return error("commissionPercent must be between 0 and 100");
-      }
-      data.commissionPercent = pct;
-    }
-    if (Object.keys(data).length === 0) return error("Nothing to update");
 
-    const brand = await prisma.brand.update({ where: { id: params.id }, data });
+    const brand = await prisma.brand.update({
+      where: { id: params.id },
+      data: { name: body.name.trim() },
+    });
     return success(brand);
   });
 }
 
 // DELETE /api/admin/brands/[id] — break up the brand.
 // Outlets revert to independent (brandId set null via onDelete: SetNull).
-// Owner is demoted back to VENDOR. Commission ledger entries remain for
-// historical records but become orphans (the FK is CASCADE so they're cleaned).
+// Owner is demoted back to VENDOR.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   return withSuperAdmin(async () => {
     const brand = await prisma.brand.findUnique({ where: { id: params.id } });

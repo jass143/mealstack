@@ -18,7 +18,6 @@ import {
   LogOut,
   Layers,
   Building2,
-  Wallet,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -43,7 +42,6 @@ const navItems = [
 const brandNavItems = [
   { label: "Brand Overview", href: "/dashboard/brand", icon: Layers, exact: true },
   { label: "Outlets", href: "/dashboard/brand/outlets", icon: Building2, exact: false },
-  { label: "Commission", href: "/dashboard/brand/commission", icon: Wallet, exact: false },
 ] as const
 
 function getRoleBadge(role: string) {

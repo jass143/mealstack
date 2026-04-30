@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Building2, ShoppingBag, DollarSign, Layers, Wallet, ArrowRight } from "lucide-react";
+import { Building2, ShoppingBag, DollarSign, ArrowRight } from "lucide-react";
 
 type Overview = {
-  brand: { name: string; commissionPercent: number; createdAt: string };
+  brand: { name: string; createdAt: string };
   outletCount: number;
   totals: {
     orders: number;
     revenueCents: number;
-    commissionDueCents: number;
-    commissionPaidCents: number;
   };
   outlets: {
     id: string;
@@ -19,7 +17,6 @@ type Overview = {
     currency: string;
     orderCount: number;
     paidRevenueCents: number;
-    pendingCommissionCents: number;
   }[];
 };
 
@@ -49,8 +46,6 @@ export default function BrandOverviewPage() {
     { label: "Outlets", value: data.outletCount.toString(), icon: Building2, color: "text-orange-400" },
     { label: "Total orders", value: data.totals.orders.toLocaleString(), icon: ShoppingBag, color: "text-blue-400" },
     { label: "Total paid revenue", value: formatCurrency(data.totals.revenueCents), icon: DollarSign, color: "text-green-400" },
-    { label: "Commission due", value: formatCurrency(data.totals.commissionDueCents), icon: Wallet, color: "text-amber-400" },
-    { label: "Commission paid", value: formatCurrency(data.totals.commissionPaidCents), icon: Layers, color: "text-violet-400" },
   ];
 
   return (
@@ -58,11 +53,11 @@ export default function BrandOverviewPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Brand: {data.brand.name}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Aggregated data across all outlets in this brand. Commission rate: <span className="font-semibold text-amber-400">{data.brand.commissionPercent}%</span>
+          Read-only oversight across every outlet in your brand.
         </p>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 grid-cols-3 max-w-3xl">
         {cards.map((c) => (
           <div key={c.label} className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center justify-between">
@@ -87,13 +82,12 @@ export default function BrandOverviewPage() {
               <th className="text-left px-5 py-3 font-semibold">Outlet</th>
               <th className="text-right px-5 py-3 font-semibold">Orders</th>
               <th className="text-right px-5 py-3 font-semibold">Paid revenue</th>
-              <th className="text-right px-5 py-3 font-semibold">Pending commission</th>
             </tr>
           </thead>
           <tbody>
             {data.outlets.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">No outlets linked to this brand yet.</td>
+                <td colSpan={3} className="px-5 py-8 text-center text-muted-foreground">No outlets linked to this brand yet.</td>
               </tr>
             ) : (
               data.outlets.map((o) => (
@@ -101,7 +95,6 @@ export default function BrandOverviewPage() {
                   <td className="px-5 py-3 font-medium">{o.name}</td>
                   <td className="px-5 py-3 text-right tabular-nums">{o.orderCount}</td>
                   <td className="px-5 py-3 text-right tabular-nums text-green-400">{formatCurrency(o.paidRevenueCents, o.currency)}</td>
-                  <td className="px-5 py-3 text-right tabular-nums text-amber-400">{formatCurrency(o.pendingCommissionCents, o.currency)}</td>
                 </tr>
               ))
             )}
