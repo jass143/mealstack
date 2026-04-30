@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     });
 
     return success(summaries);
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }
 
 export async function POST(req: NextRequest) {
@@ -118,5 +118,5 @@ export async function POST(req: NextRequest) {
     });
 
     return success(summary);
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }

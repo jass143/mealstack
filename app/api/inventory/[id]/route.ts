@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     return success(item);
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
@@ -77,5 +77,5 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     });
 
     return success(item);
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }

@@ -82,5 +82,5 @@ export async function DELETE(req: NextRequest) {
     await prisma.upiConfig.delete({ where: { id: config.id } });
 
     return success({ message: "UPI config removed" });
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }

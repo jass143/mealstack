@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     });
 
     return success(transaction, 201);
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }
 
 export async function DELETE(req: NextRequest) {
@@ -73,5 +73,5 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.cashTransaction.delete({ where: { id } });
     return success({ message: "Deleted" });
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }

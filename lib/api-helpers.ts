@@ -59,7 +59,7 @@ export async function getApiContext(): Promise<ApiContext | null> {
 //         where: { tenantId: ctx.tenantId }
 //       });
 //       return success(data);
-//     }, [Role.VENDOR, Role.MANAGER]);
+//     }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 //   }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -103,6 +103,44 @@ export async function withSuperAdmin(
     return await handler(id);
   } catch (err) {
     console.error("[SuperAdmin API Error]", err);
+    return error("Internal server error", 500);
+  }
+}
+
+// ─── Brand Owner Wrapper ────────────────────────────────────────────────────
+// Used by /api/brand/* routes. Role MUST be BRAND_OWNER. Resolves the user's
+// brand from the database so handlers can scope queries without trusting any
+// client-supplied brandId.
+// ────────────────────────────────────────────────────────────────────────────
+
+export type BrandContext = {
+  userId: string;
+  brandId: string;
+  commissionPercent: number;
+};
+
+export async function withBrandOwner(
+  handler: (ctx: BrandContext) => Promise<NextResponse>
+): Promise<NextResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return error("Unauthorized", 401);
+
+    const { id, role } = session.user as { id: string; role: string };
+    if (role !== Role.BRAND_OWNER) return error("Forbidden", 403);
+
+    // Lazy import to avoid circular dep with auth-options.
+    const { default: prisma } = await import("./prisma");
+    const brand = await prisma.brand.findUnique({ where: { ownerUserId: id } });
+    if (!brand) return error("No brand attached to this account", 404);
+
+    return await handler({
+      userId: id,
+      brandId: brand.id,
+      commissionPercent: brand.commissionPercent,
+    });
+  } catch (err) {
+    console.error("[BrandOwner API Error]", err);
     return error("Internal server error", 500);
   }
 }

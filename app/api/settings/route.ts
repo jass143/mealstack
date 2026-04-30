@@ -52,5 +52,5 @@ export async function PATCH(req: Request) {
     });
 
     return success(tenant);
-  }, [Role.VENDOR]);
+  }, [Role.VENDOR, Role.BRAND_OWNER]);
 }

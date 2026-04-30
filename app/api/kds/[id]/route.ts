@@ -122,5 +122,5 @@ export async function PATCH(
       console.error("KDS PATCH error:", err);
       return error("Failed to update ticket", 500);
     }
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }

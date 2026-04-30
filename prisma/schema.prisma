@@ -11,6 +11,7 @@ datasource db {
 
 enum Role {
   SUPERADMIN
+  BRAND_OWNER
   VENDOR
   MANAGER
 }
@@ -65,10 +66,35 @@ enum ShiftStatus {
   COMPLETED
 }
 
+// ─── Brand (Franchise grouping over Tenants) ────────────────────────────────
+//
+// A Brand owns 1..N Tenants ("outlets"). The brand's owner has read-only
+// access across every outlet and earns `commissionPercent` of paid order
+// totals from each outlet (recorded in commission_ledger).
+//
+// An outlet without a brandId is an independent Vendor (today's default).
+// ────────────────────────────────────────────────────────────────────────────
+
+model Brand {
+  id                String   @id @default(cuid())
+  name              String
+  ownerUserId       String   @unique
+  commissionPercent Float    @default(0) // e.g., 2.0 means 2% per paid order
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  owner    User              @relation("BrandOwner", fields: [ownerUserId], references: [id])
+  outlets  Tenant[]
+  ledger   CommissionLedger[]
+
+  @@map("brands")
+}
+
 // ─── Tenant (Restaurant) ────────────────────────────────────────────────────
 
 model Tenant {
   id        String   @id @default(cuid())
+  brandId   String?
   name      String
   domain    String   @unique
   logo      String?
@@ -81,6 +107,7 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  brand                 Brand?            @relation(fields: [brandId], references: [id], onDelete: SetNull)
   users                 User[]
   categories            Category[]
   products              Product[]
@@ -97,7 +124,9 @@ model Tenant {
   cashTransactions      CashTransaction[]
   upiConfigs            UpiConfig[]
   upiPayments           UpiPayment[]
+  commissionEntries     CommissionLedger[]
 
+  @@index([brandId])
   @@map("tenants")
 }
 
@@ -122,6 +151,7 @@ model User {
   shifts           Shift[]
   notifications    Notification[]
   cashTransactions CashTransaction[] @relation("CashTransactionCreatedBy")
+  brandOwned       Brand?            @relation("BrandOwner")
 
   @@index([tenantId])
   @@map("users")
@@ -245,13 +275,14 @@ model Order {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  table      RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  customer   Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  createdBy  User             @relation("OrderCreatedBy", fields: [createdById], references: [id])
-  items       OrderItem[]
-  kdsTickets  KdsTicket[]
-  upiPayments UpiPayment[]
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  table             RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customer          Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdBy         User             @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  items             OrderItem[]
+  kdsTickets        KdsTicket[]
+  upiPayments       UpiPayment[]
+  commissionEntries CommissionLedger[]
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId, status])
@@ -536,4 +567,39 @@ model DailySummary {
   @@unique([tenantId, date])
   @@index([tenantId, date])
   @@map("daily_summaries")
+}
+
+// ─── Commission Ledger (Brand owner cut on franchisee orders) ───────────────
+//
+// One row per paid order belonging to a tenant that has a brand. Generated
+// automatically when an order transitions to PAID. The brand owner sees this
+// ledger under /dashboard/brand/commission and can mark entries as PAID once
+// the franchisee settles up.
+// ────────────────────────────────────────────────────────────────────────────
+
+enum CommissionStatus {
+  PENDING
+  PAID
+}
+
+model CommissionLedger {
+  id          String           @id @default(cuid())
+  brandId     String
+  tenantId    String
+  orderId     String           @unique
+  amountCents Int
+  status      CommissionStatus @default(PENDING)
+  paidAt      DateTime?
+  paidRef     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  brand  Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, status])
+  @@index([brandId, createdAt])
+  @@index([tenantId])
+  @@map("commission_ledger")
 }

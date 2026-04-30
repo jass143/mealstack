@@ -29,5 +29,5 @@ export async function GET(_req: NextRequest) {
       stripeSubId: subscription.stripeSubId,
       planDetails,
     });
-  }, [Role.VENDOR]);
+  }, [Role.VENDOR, Role.BRAND_OWNER]);
 }

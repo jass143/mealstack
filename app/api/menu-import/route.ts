@@ -119,5 +119,5 @@ export async function POST(req: NextRequest) {
     };
 
     return success(response);
-  }, [Role.VENDOR, Role.MANAGER]);
+  }, [Role.VENDOR, Role.MANAGER, Role.BRAND_OWNER]);
 }

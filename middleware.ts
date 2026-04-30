@@ -4,11 +4,13 @@ import { NextResponse } from "next/server";
 // ─── Multi-Tenant Middleware ────────────────────────────────────────────────
 //
 // Routing model:
-//   /admin/*       → SUPERADMIN only (platform admin console). No tenant.
-//   /admin/login   → public
-//   /dashboard/*   → VENDOR or MANAGER. Tenant-scoped via JWT.
-//   /api/admin/*   → SUPERADMIN only. No tenant header.
-//   everything else (POS, KDS, etc) → tenant-scoped via JWT.
+//   /admin/*           → SUPERADMIN only (platform admin console). No tenant.
+//   /admin/login       → public
+//   /dashboard/*       → VENDOR / MANAGER / BRAND_OWNER. Tenant-scoped via JWT.
+//   /dashboard/brand/* → BRAND_OWNER only (cross-tenant brand views).
+//   /api/admin/*       → SUPERADMIN only. No tenant header.
+//   /api/brand/*       → BRAND_OWNER only. No tenant header.
+//   everything else    → tenant-scoped via JWT.
 //
 // Tenant resolution (for tenant-scoped routes only):
 //   1. JWT session → tenantId already embedded at login (authenticated)
@@ -33,6 +35,15 @@ function isPublicPath(pathname: string): boolean {
 function isAdminPath(pathname: string): boolean {
   if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) return false;
   return pathname === "/admin" || pathname.startsWith("/admin/") || pathname.startsWith("/api/admin");
+}
+
+function isBrandPath(pathname: string): boolean {
+  return (
+    pathname === "/dashboard/brand" ||
+    pathname.startsWith("/dashboard/brand/") ||
+    pathname.startsWith("/api/brand/") ||
+    pathname === "/api/brand"
+  );
 }
 
 function resolveSubdomain(host: string): string | null {
@@ -61,8 +72,13 @@ export default withAuth(
       return NextResponse.redirect(new URL("/admin", req.url));
     }
 
-    // Vendor/Manager trying to access /admin → bounce to /dashboard
+    // Vendor/Manager/BrandOwner trying to access /admin → bounce to /dashboard
     if (role && role !== "SUPERADMIN" && isAdminPath(pathname)) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // Non-BrandOwner trying to access brand views → bounce to /dashboard
+    if (role && role !== "BRAND_OWNER" && isBrandPath(pathname)) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

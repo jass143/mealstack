@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, Building2, CreditCard, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, Building2, CreditCard, ShieldCheck, LogOut, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Tenants", href: "/admin/tenants", icon: Building2, exact: false },
+  { label: "Brands", href: "/admin/brands", icon: Layers, exact: false },
   { label: "Payments", href: "/admin/payments", icon: CreditCard, exact: false },
 ] as const;
 
